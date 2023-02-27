@@ -33,3 +33,11 @@ void Status::SetBLEStatus (uint8_t BLE_status) {
     this->_BLE_status = BLE_status;
     xSemaphoreGive (this->lock);
 }
+
+
+std::string Status::get_BLE_server () { return this->_BLE_server; }
+void Status::set_BLE_server (std::string BLE_server) {
+    xSemaphoreTake (this->lock, portMAX_DELAY);
+    this->_BLE_server = BLE_server;
+    xSemaphoreGive (this->lock);
+}

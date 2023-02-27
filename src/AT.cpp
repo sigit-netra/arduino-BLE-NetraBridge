@@ -113,6 +113,6 @@ std::string AT::processCommand (std::string input) {
     }
 
     // printf ("--%s--\r\n", input.c_str ());
-    printf ("AT_ERROR\r\n");
+    // printf ("AT_ERROR\r\n");
     return "AT_ERROR\r\n";
 }

@@ -1,8 +1,12 @@
 #include "Arduino.h"
 #include "BLEDevice.h"
 //#include "BLEScan.h"
+#include "AES_256.h"
 #include "netracubeBLE.h"
 #include "status.hpp"
+
+
+AES_256 aes256_test;
 
 netracubeBLE NetraCubeBLE;
 auto status = Status::GetInstance ();
@@ -23,7 +27,10 @@ const long interval          = 600000;
 const long interval_BLE_connection          = 300000;
 unsigned long previousMillis_BLE_connection = 0;
 
-#define bleServerName "70005216"
+// #define bleServerName "70005216"
+// #define bleServerName "70002557"
+#define bleServerName "70002921"
+
 
 // The remote service we wish to connect to.
 static BLEUUID serviceUUID ("6ecb2400-dc4c-40cc-a6e0-81e0dbda54e5");
@@ -33,7 +40,8 @@ static BLEUUID UUID_CHAR_GF_MT_ACT ("6ecb3401-dc4c-40cc-a6e0-81e0dbda54e5");
 static BLEUUID UUID_CHAR_GF_MO_CHAR1 ("6ecb2481-dc4c-40cc-a6e0-81e0dbda54e5");
 static BLEUUID UUID_CHAR_GF_MO_ACT ("6ecb3481-dc4c-40cc-a6e0-81e0dbda54e5");
 
-static BLEAddress bleAddr ("f6:6a:e2:9c:a4:95");
+// static BLEAddress bleAddr ("f6:6a:e2:9c:a4:95");
+static BLEAddress bleAddr ("df:19:c2:99:eb:76");
 
 const uint8_t msg_sos[20]        = { 0x01, 0xD3, 0xAE, 0x4A, 0x17, 0xC1, 0xFA,
                               0x05, 0xEC, 0xD7, 0x11, 0x1E, 0x06, 0x71,
@@ -196,6 +204,9 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         Serial.print ("BLE Advertised Device found: ");
         Serial.println (advertisedDevice.toString ().c_str ());
 
+        auto status = Status::GetInstance ();
+        // status->set_BLE_server (esn.c_str ());
+
 
         // We have found a device, let us now see if it contains the service we
         // are looking for.
@@ -216,7 +227,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
             Serial.println ("Device found by address ");
         }
 
-        if (advertisedDevice.getName () == bleServerName) {
+        if (advertisedDevice.getName () == status->get_BLE_server () /*bleServerName*/) {
             BLEDevice::getScan ()->stop ();
             myDevice  = new BLEAdvertisedDevice (advertisedDevice);
             doConnect = true;
@@ -230,6 +241,18 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 
 void setup () {
     Serial.begin (115200);
+
+    aes256_test.get_aes256 ();
+
+    aes256_test.test_AES256 ();
+
+    // Serial.println ("-----------");
+    // for (uint8_t i = 0; i < 32; i++) {
+    //     Serial.print (BLE_components::key_AES256[i], HEX);
+    //     // server.AES256[i] = myuint[i];
+    // }
+    // Serial.println ("-----------");
+
     NetraCubeBLE.task_init ();
 
     Serial.println ("Starting Arduino BLE Client application...");

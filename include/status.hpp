@@ -13,6 +13,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <stdint.h>
+#include "string"
 
 
 class Status {
@@ -30,6 +31,9 @@ class Status {
     uint8_t GetBLEStatus ();
     void SetBLEStatus (uint8_t BLE_status);
 
+    std::string get_BLE_server();
+    void set_BLE_server(std::string BLE_server);
+
 
   private:
     static Status* instance;
@@ -38,4 +42,7 @@ class Status {
     uint8_t _tamper_status = 0;
     uint8_t _sos_status    = 0;
     uint8_t _BLE_status    = 0;
+
+    uint8_t _aes256[35] = { 0 };
+    std::string _BLE_server;
 };
