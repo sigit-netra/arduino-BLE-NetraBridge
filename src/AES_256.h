@@ -4,12 +4,14 @@
 #include "FS.h"
 #include "MessageTypes.h"
 #include "SPIFFS.h"
+#include "global.hpp"
+#include "status.hpp"
+#include "string"
 #include <AES.h>
+#include <ArduinoJson.h>
 #include <Crypto.h>
 #include <string>
-#include <ArduinoJson.h>
-#include "string"
-#include "status.hpp"
+
 
 #define FORMAT_SPIFFS_IF_FAILED true
 
@@ -32,7 +34,7 @@ class AES_256 {
   private:
     AES256 aes256;
     BlockCipher* cipher = &aes256;
-    BLE_components server;
+    // BLE_components server;
 
 
   public:
@@ -40,6 +42,13 @@ class AES_256 {
     void test_AES256 ();
     void get_aes256 ();
 
+    void restart_cmd();
+
+    void gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData);
+
+    static void restart_cmd_wrapper (void* _this) {
+        static_cast<AES_256*> (_this)->restart_cmd ();
+    }
 
     void listDir (fs::FS& fs, const char* dirname, uint8_t levels) {
         Serial.printf ("Listing directory: %s\r\n", dirname);
@@ -207,5 +216,19 @@ class AES_256 {
             }
         }
         return debugLogData;
+    }
+
+    void writeFileString (fs::FS& fs, const char* path, const char* message) {
+        Serial.printf ("Writing file: %s\n", path);
+
+        File file = fs.open (path, FILE_WRITE);
+        if (!file) {
+            Serial.println ("Failed to open file for writing");
+            return;
+        }
+        if (!file.print (message)) {
+            Serial.println ("Write failed");
+        }
+        file.close ();
     }
 };

@@ -14,18 +14,19 @@ struct BLE_components {
     uint8_t key_AES256[MAX_AES256_SIZE];
 };
 
-struct msg_sos {
-    uint8_t value[20];
-};
-
-struct msg_cancel_sos {
-    uint8_t value[20];
-};
-
-struct msg_tamper {
-    uint8_t value[20];
-};
-
-struct msg_process {
+struct ble_msg_encrypted {
+    uint8_t msg_sos[20];
+    uint8_t msg_cancel_sos[20];
+    uint8_t msg_tamper[20];
     uint8_t msg_process[1] = { 0x01 };
+};
+
+struct raw_ble_msg_payload {
+    uint8_t msg_sos[20] = { 0x24, 0x07, 0x09, 0x48, 0xe4, 0x92, 0x39, 0x24,
+                            0x8e, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+    uint8_t msg_cancel_sos[20] = { 0x24, 0x07, 0x09, 0x08, 0x03, 0x42,
+                                   0x10, 0xb4, 0x8e, 0xff, 0xff, 0xff,
+                                   0xff, 0xff, 0xff, 0xff };
+    uint8_t msg_tamper[20] = { 0x24, 0x07, 0x09, 0x4c, 0x03, 0x0f, 0x11, 0x13,
+                               0x8d, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 };

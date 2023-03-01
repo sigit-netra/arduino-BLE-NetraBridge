@@ -6,25 +6,9 @@
 // constexpr is C++11 feature
 static constexpr inline ctll::fixed_string AT_ONLY                 = "^AT$";
 static constexpr inline ctll::fixed_string AT_SEND                 = "^AT\\+\\+SEND=([0,1]{1}):(.+)$";
-static constexpr inline ctll::fixed_string AT_OUTBOX               = "^AT\\+\\+OUTBOX=\\?$";
-static constexpr inline ctll::fixed_string AT_DELOUTBOX            = "^AT\\+\\+DELOUTBOX=(-?\\d+)$";
-static constexpr inline ctll::fixed_string AT_REFRESH              = "^AT\\+\\+REFRESH$";
-static constexpr inline ctll::fixed_string AT_INBOX                = "^AT\\+\\+INBOX=\\?$";
-static constexpr inline ctll::fixed_string AT_DELINBOX             = "^AT\\+\\+DELINBOX=(-?\\d+)$";
+static constexpr inline ctll::fixed_string AT_SETBLE               = "^AT\\+\\+SETBLE=(\\w+):(\\w+)$";//^AT\+\+SETBLE=[0-9]+:[A-Za-z0-9]+$
 static constexpr inline ctll::fixed_string AT_STATUS               = "^AT\\+\\+STATUS=\\?$";
-static constexpr inline ctll::fixed_string AT_TRACKER              = "^AT\\+\\+TRACKER=\\?$";
-static constexpr inline ctll::fixed_string AT_ABOUT                = "^AT\\+\\+ABOUT=\\?$";
-static constexpr inline ctll::fixed_string AT_SETSTATUSUPDATER_get = "^AT\\+\\+SETSTATUSUPDATER=\\?$";
-static constexpr inline ctll::fixed_string AT_SETSTATUSUPDATER_set = "^AT\\+\\+SETSTATUSUPDATER=([0,1]{1}),(\\d+)$";
-static constexpr inline ctll::fixed_string AT_SETTRACKER_get       = "^AT\\+\\+SETTRACKER=\\?$";
-static constexpr inline ctll::fixed_string AT_SETTRACKER_set       = "^AT\\+\\+SETTRACKER=([0,1]{1}),(\\d+)$";
-static constexpr inline ctll::fixed_string AT_WIFI                 = "^AT\\+\\+WIFI=([0,1]{1})$";
-static constexpr inline ctll::fixed_string AT_SETALERT_get         = "^AT\\+\\+SETALERT=\\?$";
-static constexpr inline ctll::fixed_string AT_SETALERT_set         = "^AT\\+\\+SETALERT=([0,1]{1}),([0,1]{1}),([0,1]{1}),(\\d+),(\\d+)$";
-static constexpr inline ctll::fixed_string AT_SETWIFI_get          = "^AT\\+\\+SETWIFI=\\?$";
-static constexpr inline ctll::fixed_string AT_SETWIFI_set          = "^AT\\+\\+SETWIFI=(\\S+),(.+)$";
 static constexpr inline ctll::fixed_string AT_SOS                  = "^AT\\+\\+SOS=(\\d+)";
-static constexpr inline ctll::fixed_string AT_POSTACTIVATION       = "^AT\\+\\+POSTACTIVATION=(\\d+):(.+)$";
 // clang-format on
 
 /**
@@ -110,6 +94,36 @@ std::string AT::processCommand (std::string input) {
         }
 
         return result;
+    }
+
+    if (auto [whole, esn, aes256] = ctre::match<AT_SETBLE> (input); whole) {
+        printf ("SETBLE\r\n");
+
+        std::string split_esn;
+        split_esn += (esn.str ());
+        char* spt_esn = strtok ((char*)split_esn.c_str (), ":");
+
+        StaticJsonDocument<200> doc;
+        doc[String ("esn")]    = spt_esn;
+        doc[String ("aes256")] = aes256.str ();
+
+        std::string output;
+        serializeJson (doc, output);
+
+        aes.writeFileString (SPIFFS, "/encryption_keys.json", output.data ());
+
+        xTaskCreatePinnedToCore (aes.restart_cmd_wrapper,
+                                 "restart", 1 * 1024, this, 4, NULL, 0);
+        
+        std::string resp;
+        resp += "++SETBLE:";
+        resp += std::to_string (esn);
+        resp += ',';
+        resp += std::to_string (aes256.str ().length () / 2);
+        resp += "\r\n\r\n";
+        resp += 1 == true ? "OK" : "AT_ERROR";
+        resp += "\r\n";
+        return resp;
     }
 
     // printf ("--%s--\r\n", input.c_str ());

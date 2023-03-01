@@ -27,8 +27,8 @@ void AES_256::get_aes256 () {
     String aes256  = obj[String ("aes256")];
 
     Serial.println (esn);
-    Serial.println (aes256);
-    server.BLE_server = esn.c_str ();
+    // Serial.println (aes256);
+    ble_server.BLE_server = esn.c_str ();
 
     auto status = Status::GetInstance ();
     status->set_BLE_server (esn.c_str ());
@@ -60,16 +60,14 @@ void AES_256::get_aes256 () {
 
     for (uint8_t i = 0; i < 32; i++) {
         // Serial.println (myuint[i], HEX);
-        server.key_AES256[i] = myuint[i];
+        ble_server.key_AES256[i] = myuint[i];
     }
 
     for (uint8_t i = 0; i < 32; i++) {
-        Serial.print (server.key_AES256[i], HEX);
+        Serial.print (ble_server.key_AES256[i], HEX);
         // server.AES256[i] = myuint[i];
     }
     Serial.println ("");
-
-    Serial.println ("Ending");
 }
 
 uint16_t AES_256::GF_Common_Crc16 (uint8_t* data, uint16_t length) {
@@ -93,20 +91,30 @@ uint16_t AES_256::GF_Common_Crc16 (uint8_t* data, uint16_t length) {
 }
 
 void AES_256::test_AES256 () {
+    Serial.println ("*********************");
+    Serial.println ("");
+    gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_cancel_sos, ble_msg.msg_cancel_sos);
+    gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_sos, ble_msg.msg_sos);
+    gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_tamper, ble_msg.msg_tamper);
 
-    Serial.println ("testtstst");
+    // delay (100);
+    // for (int i = 0; i < 20; i++) {
+    //     Serial.printf ("%02X", ble_msg.msg_cancel_sos[i], HEX);
+    // }
+    Serial.println ("");
 
+    Serial.println ("*********************");
+}
+
+void AES_256::restart_cmd () {
+    delay (3000);
+    ESP.restart ();
+}
+
+void AES_256::gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData) {
     uint8_t buffer[1024];
     uint8_t blockBuffer[cipher->blockSize ()];
     uint8_t messageBuffer[cipher->blockSize ()];
-    uint8_t key[33] = { 0x66, 0x0e, 0xab, 0x1c, 0x68, 0xe0, 0x9a, 0xb5,
-                        0xe6, 0x84, 0x6d, 0x72, 0x59, 0x8f, 0x18, 0x41,
-                        0xe5, 0x60, 0x1f, 0xaa, 0x6c, 0x1f, 0xa1, 0x18,
-                        0x62, 0xf1, 0x90, 0xb1, 0xec, 0x95, 0x67, 0x76 }; // 32 Byte key
-    // char message[1024] = {0x3b, 0x0e, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14}; // message of up to 1024 in length
-    char message[1024] = { 0x24, 0x07, 0x09, 0x35, 0xeb, 0x6b, 0x68, 0x2b,
-                           0x9b, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }; // message of up to 1024 in length
-
 
     // Calculate the total length, number of full blocks, and leftover characters < the size of a block.
     int msgLen   = strlen ((char*)message);
@@ -135,7 +143,7 @@ void AES_256::test_AES256 () {
 
         // Perform crypto on the temp buffer and push it to another temp buffer
         crypto_feed_watchdog ();
-        cipher->setKey (server.key_AES256, cipher->keySize ());
+        cipher->setKey (ble_server.key_AES256, cipher->keySize ());
         cipher->encryptBlock (blockBuffer, messageBuffer);
 
 
@@ -154,14 +162,15 @@ void AES_256::test_AES256 () {
     // memcpy(buffer + 1, buffer, sizeof(buffer));
     // buffer[0] = 0x01;
     // Print the encrypted hex
-    for (int i = 0; i < blocks * (int)cipher->blockSize (); i++) {
-        Serial.printf ("%02X", buffer[i], HEX);
-    }
-    Serial.println ();
+    // for (int i = 0; i < blocks * (int)cipher->blockSize (); i++) {
+    //     Serial.printf ("%02X", buffer[i], HEX);
+    // }
+    // Serial.println ();
     int lenlen = blocks * (int)cipher->blockSize ();
-    Serial.println (lenlen);
-    uint8_t* buffNewData = (uint8_t*)malloc (lenlen + 1);
-    buffNewData[0]       = 0x01;
+    // uint8_t buffNewData[10];
+    // Serial.println (lenlen);
+    // buffNewData    = (uint8_t*)malloc (lenlen + 1);
+    buffNewData[0] = 0x01;
     memmove (buffNewData + 1, buffer, lenlen);
     uint16_t crcss          = GF_Common_Crc16 (buffNewData, lenlen + 1);
     buffNewData[lenlen + 1] = 0x1e;
@@ -171,7 +180,7 @@ void AES_256::test_AES256 () {
     buffNewData[lenlen + 3] = crcss;
 
 
-    Serial.println (crcss, HEX);
+    // Serial.println (crcss, HEX);
 
 
     // std::string str2 = "a";

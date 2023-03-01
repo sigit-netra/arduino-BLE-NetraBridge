@@ -5,7 +5,10 @@
 #include <map>
 #include <sstream>
 #include <string>
-
+#include "global.hpp"
+#include "Arduino.h"
+#include <ArduinoJson.h>
+#include "AES_256.h"
 
 class AT {
   public:
@@ -14,4 +17,5 @@ class AT {
 
   private:
     Status* status;
+    AES_256 aes;
 };
