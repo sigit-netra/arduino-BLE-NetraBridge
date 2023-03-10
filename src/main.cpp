@@ -218,13 +218,13 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
             doScan    = true;
 
         } // Found our server
-        if (advertisedDevice.getAddress ().equals (bleAddr)) {
-            BLEDevice::getScan ()->stop ();
-            myDevice  = new BLEAdvertisedDevice (advertisedDevice);
-            doConnect = true;
-            doScan    = true;
-            Serial.println ("Device found by address ");
-        }
+        // if (advertisedDevice.getAddress ().equals (bleAddr)) {
+        //     BLEDevice::getScan ()->stop ();
+        //     myDevice  = new BLEAdvertisedDevice (advertisedDevice);
+        //     doConnect = true;
+        //     doScan    = true;
+        //     Serial.println ("Device found by address ");
+        // }
 
         if (advertisedDevice.getName () == status->get_BLE_server () /*bleServerName*/) {
             BLEDevice::getScan ()->stop ();
