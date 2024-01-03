@@ -42,7 +42,8 @@ class AES_256 {
     void test_AES256 ();
     void get_aes256 ();
 
-    void restart_cmd();
+    void restart_cmd ();
+    void checkAndCreateEncryptionKeysFile ();
 
     void gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData);
 
