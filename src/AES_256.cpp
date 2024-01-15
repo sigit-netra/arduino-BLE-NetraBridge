@@ -1,4 +1,31 @@
 #include "AES_256.h"
+void AES_256::checkAndCreateEncryptionKeysFile () {
+    if (!SPIFFS.begin (true)) {
+        Serial.println ("An Error has occurred while mounting SPIFFS");
+        return;
+    }
+
+    if (!SPIFFS.exists ("/encryption_keys.json")) {
+        // File does not exist, create and write default content
+        Serial.println ("/encryption_keys.json does not exist. Creating...");
+
+        StaticJsonDocument<1024> doc;
+        doc["esn"] = "70002709";
+        doc["aes256"] =
+        "2C5F27D94AF5572CB3C135A9EE39A5E5B3A6B329264E2DDD40E45D28B9D03FAD";
+
+        File file = SPIFFS.open ("/encryption_keys.json", FILE_WRITE);
+        if (file) {
+            serializeJson (doc, file);
+            file.close ();
+            Serial.println ("File created successfully.");
+        } else {
+            Serial.println ("Error creating file.");
+        }
+    } else {
+        Serial.println ("/encryption_keys.json exists.");
+    }
+}
 
 void AES_256::get_aes256 () {
     // Initialize SPIFFS
@@ -17,6 +44,9 @@ void AES_256::get_aes256 () {
     // testFileIO (SPIFFS, "/test.txt");
     // deleteFile (SPIFFS, "/test.txt");
     // Serial.println ("Test complete");
+
+    // Check and create /encryption_keys.json if it doesn't exist
+    checkAndCreateEncryptionKeysFile ();
 
     std::string data = readFileString (SPIFFS, "/encryption_keys.json");
     // CUBE_LOG_SERIAL ("%s", data.data ());
@@ -178,7 +208,7 @@ void AES_256::gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData) 
     buffNewData[lenlen + 1] = 0x1e;
 
 
-    buffNewData[lenlen + 2] = (uint8_t) (crcss >> 8) & 0xff;
+    buffNewData[lenlen + 2] = (uint8_t)(crcss >> 8) & 0xff;
     buffNewData[lenlen + 3] = crcss;
 
 
