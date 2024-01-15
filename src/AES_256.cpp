@@ -96,6 +96,8 @@ void AES_256::test_AES256 () {
     gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_cancel_sos, ble_msg.msg_cancel_sos);
     gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_sos, ble_msg.msg_sos);
     gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_tamper, ble_msg.msg_tamper);
+    gen_aes256 (ble_server.key_AES256, ble_raw_msg.msg_int60m, ble_msg.msg_int60m);
+
 
     // delay (100);
     // for (int i = 0; i < 20; i++) {

@@ -9,6 +9,8 @@ static constexpr inline ctll::fixed_string AT_SEND                 = "^AT\\+\\+S
 static constexpr inline ctll::fixed_string AT_SETBLE               = "^AT\\+\\+SETBLE=(\\w+):(\\w+)$";//^AT\+\+SETBLE=[0-9]+:[A-Za-z0-9]+$
 static constexpr inline ctll::fixed_string AT_STATUS               = "^AT\\+\\+STATUS=\\?$";
 static constexpr inline ctll::fixed_string AT_SOS                  = "^AT\\+\\+SOS=(\\d+)";
+static constexpr inline ctll::fixed_string AT_SETIESINTERVAL      = "^AT\\+\\+SETIESINTERVAL=([0,1]{1}),(\\d+)$";
+
 // clang-format on
 
 /**
@@ -36,8 +38,8 @@ std::string AT::processCommand (std::string input) {
     if (auto [whole] = ctre::match<AT_STATUS> (input); whole) {
         printf ("AT_STATUS\r\n");
         char tmp[50] = { 0 };
-        sprintf (tmp, "%d,%d,%d,%.6f,%.6f,%d,%d", 1, 1, status->GetBLEStatus (),
-                 1.000, 1.000, 0, 0);
+        sprintf (tmp, "%d,%d,%d,%.6f,%.6f,%d,%d", status->GetBLEStatus (),
+                 status->GetBLEStatus (), status->GetBLEStatus (), 1.000, 1.000, 0, 0);
         //  status->GetBLEStatus (), 0.000, 0.000, 0, 0);
 
         std::string result;
@@ -45,7 +47,7 @@ std::string AT::processCommand (std::string input) {
         result += tmp;
         result += "\r\n\r\nOK\r\n";
 
-        // printf (result.c_str());
+        printf (result.c_str ());
 
 
         return result;
@@ -112,9 +114,9 @@ std::string AT::processCommand (std::string input) {
 
         aes.writeFileString (SPIFFS, "/encryption_keys.json", output.data ());
 
-        xTaskCreatePinnedToCore (aes.restart_cmd_wrapper,
-                                 "restart", 1 * 1024, this, 4, NULL, 0);
-        
+        xTaskCreatePinnedToCore (aes.restart_cmd_wrapper, "restart", 1 * 1024,
+                                 this, 4, NULL, 0);
+
         std::string resp;
         resp += "++SETBLE:";
         resp += std::to_string (esn);
@@ -124,6 +126,28 @@ std::string AT::processCommand (std::string input) {
         resp += 1 == true ? "OK" : "AT_ERROR";
         resp += "\r\n";
         return resp;
+    }
+    if (auto [whole, on, interval] = ctre::match<AT_SETIESINTERVAL> (input); whole) {
+        printf ("AT_SETIESINTERVAL_set\r\n");
+
+        bool onInt      = std::stoi (on.str ());
+        int intervalInt = std::stoi (interval.str ());
+
+        bool valid = (intervalInt >= 30 && interval <= 1440);
+        status->SetIntervalStatus(1);
+
+        if (!valid) {
+            return "AT_ERROR";
+        }
+
+        std::string result;
+        result += "++SETIESINTERVAL:";
+        result += std::to_string (valid);
+        result += "\r\n\r\n";
+        result += valid ? "OK" : "AT_ERROR";
+        result += "\r\n";
+
+        return result;
     }
 
     // printf ("--%s--\r\n", input.c_str ());

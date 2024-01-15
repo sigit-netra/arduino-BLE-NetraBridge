@@ -2,14 +2,18 @@
 #include "BLEDevice.h"
 //#include "BLEScan.h"
 #include "AES_256.h"
+#include "global.hpp"
 #include "netracubeBLE.h"
 #include "status.hpp"
-#include "global.hpp"
 
 AES_256 aes256_test;
 
 netracubeBLE NetraCubeBLE;
 auto status = Status::GetInstance ();
+
+
+int prevInterval    = 0;
+int currentInterval = 0;
 
 bool send_SOS        = false;
 bool send_CANCEL_SOS = false;
@@ -247,6 +251,7 @@ void setup () {
 
     NetraCubeBLE.task_init ();
 
+
     Serial.println ("Starting Arduino BLE Client application...");
     BLEDevice::init ("");
 
@@ -292,11 +297,13 @@ void loop () {
 
                 // Set the characteristic's value to be the array of bytes that
                 // is actually a string.
-                pRemoteCharacteristic_GF_MT_CHAR1->writeValue ((uint8_t*)ble_msg.msg_sos, 20, true);
+                pRemoteCharacteristic_GF_MT_CHAR1->writeValue ((uint8_t*)ble_msg.msg_sos,
+                                                               20, true);
                 delay (100);
                 // Set the characteristic's value to be the array of bytes that
                 // is actually a string.
-                pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process, 1, true);
+                pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process,
+                                                             1, true);
                 return_GF_MO_CHAR1 = false;
                 return_GF_MO_ACT   = false;
 
@@ -315,7 +322,8 @@ void loop () {
                 delay (100);
                 // Set the characteristic's value to be the array of bytes that
                 // is actually a string.
-                pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process, 1, true);
+                pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process,
+                                                             1, true);
                 send_CANCEL_SOS = true;
             }
         }
@@ -330,7 +338,8 @@ void loop () {
                 delay (100);
                 // Set the characteristic's value to be the array of bytes that
                 // is actually a string.
-                pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process, 1, true);
+                pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process,
+                                                             1, true);
                 send_tamper = true;
             }
         }
@@ -342,6 +351,22 @@ void loop () {
         if (!(status->GetTamperStatus ())) {
             send_tamper = false;
         }
+        if (status->GetIntervalStatus () != prevInterval) {
+
+            // Set the characteristic's value to be the array of bytes that
+            // is actually a string.
+            pRemoteCharacteristic_GF_MT_CHAR1->writeValue ((uint8_t*)ble_msg.msg_int60m,
+                                                           sizeof(ble_msg.msg_int60m), true);
+            delay (100);
+            // Set the characteristic's value to be the array of bytes that
+            // is actually a string.
+            pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process,
+                                                         1, true);
+
+            status->SetIntervalStatus(0);
+        }
+
+
     } else if (doScan) {
         // BLEDevice::getScan()->start(0);  // this is just example to start scan
         // after disconnect, most likely there is better way to do it in arduino
@@ -349,16 +374,17 @@ void loop () {
                                                  // likely there is better way to do it in arduino
     }
 
-    if (!connected) {
+    if (!connected || status->GetBLEStatus () == 0) {
         status->SetBLEStatus (0);
 
         unsigned long currentMillis_BLE_connection = millis ();
         if (currentMillis_BLE_connection - previousMillis_BLE_connection >= interval_BLE_connection) {
             previousMillis_BLE_connection = currentMillis_BLE_connection;
-            Serial.println("own __ restart");
-            delay(1000);
+            Serial.println ("own __ restart");
+            delay (1000);
             ESP.restart ();
         }
+        Serial.println (currentMillis_BLE_connection);
     }
 
     if (status->GetSOSStatus () > 1 && !return_GF_MO_CHAR1 && !return_GF_MO_ACT) {
@@ -371,14 +397,14 @@ void loop () {
 
             // Set the characteristic's value to be the array of bytes that
             // is actually a string.
-            pRemoteCharacteristic_GF_MT_CHAR1->writeValue ((uint8_t*)ble_msg.msg_sos, 20, true);
+            pRemoteCharacteristic_GF_MT_CHAR1->writeValue ((uint8_t*)ble_msg.msg_sos,
+                                                           20, true);
             delay (100);
             // Set the characteristic's value to be the array of bytes that
             // is actually a string.
-            pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process, 1, true);
+            pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process,
+                                                         1, true);
         }
     }
-
-
     delay (1000); // Delay a second between loops.
 } // End of loop

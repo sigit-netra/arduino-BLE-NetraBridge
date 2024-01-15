@@ -41,3 +41,10 @@ void Status::set_BLE_server (std::string BLE_server) {
     this->_BLE_server = BLE_server;
     xSemaphoreGive (this->lock);
 }
+
+uint8_t Status::GetIntervalStatus () { return this->_interval_status; }
+void Status::SetIntervalStatus (uint8_t interval_status) {
+    xSemaphoreTake (this->lock, portMAX_DELAY);
+    this->_interval_status = interval_status;
+    xSemaphoreGive (this->lock);
+}
