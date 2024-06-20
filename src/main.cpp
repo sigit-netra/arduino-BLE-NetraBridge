@@ -28,12 +28,10 @@ bool return_GF_MO_ACT       = false;
 unsigned long previousMillis = 0;
 const long interval          = 600000;
 
-const long interval_BLE_connection          = 120000;
+const long interval_BLE_connection          = 30000;
 unsigned long previousMillis_BLE_connection = 0;
 
-// #define bleServerName "70005216"
-// #define bleServerName "70002557"
-#define bleServerName "70002921"
+#define bleServerName "70002921" // hanyak contoh
 
 // The remote service we wish to connect to.
 static BLEUUID serviceUUID ("6ecb2400-dc4c-40cc-a6e0-81e0dbda54e5");
@@ -43,20 +41,7 @@ static BLEUUID UUID_CHAR_GF_MT_ACT ("6ecb3401-dc4c-40cc-a6e0-81e0dbda54e5");
 static BLEUUID UUID_CHAR_GF_MO_CHAR1 ("6ecb2481-dc4c-40cc-a6e0-81e0dbda54e5");
 static BLEUUID UUID_CHAR_GF_MO_ACT ("6ecb3481-dc4c-40cc-a6e0-81e0dbda54e5");
 
-// static BLEAddress bleAddr ("f6:6a:e2:9c:a4:95");
-static BLEAddress bleAddr ("df:19:c2:99:eb:76");
-
-// const uint8_t ble_msg.msg_sos[20]        = { 0x01, 0xD3, 0xAE, 0x4A, 0x17, 0xC1, 0xFA,
-//                               0x05, 0xEC, 0xD7, 0x11, 0x1E, 0x06, 0x71,
-//                               0xE8, 0x7E, 0x3E, 0x1E, 0x27, 0x4F };
-// const uint8_t ble_msg.msg_cancel_sos[20] = { 0x01, 0xAE, 0x8D, 0x93, 0xDD, 0x1B, 0x61,
-//                                      0x1D, 0x1C, 0xC5, 0x4D, 0xDF, 0xDF, 0xAA,
-//                                      0xF5, 0x0D, 0x26, 0x1E, 0x32, 0xBF };
-// const uint8_t ble_msg.msg_tamper[20]     = { 0x01, 0x36, 0x48, 0x27, 0xA7, 0x18, 0x0B,
-//                                  0x6D, 0x21, 0x05, 0xCB, 0xFA, 0xD3, 0x6F,
-//                                  0xC6, 0x27, 0xD6, 0x1E, 0xB5, 0x14 };
-
-// const uint8_t ble_msg.msg_process[1] = { 0x01 };
+static BLEAddress bleAddr ("df:19:c2:99:eb:76"); // hanyak contoh
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -208,28 +193,6 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         Serial.println (advertisedDevice.toString ().c_str ());
 
         auto status = Status::GetInstance ();
-        // status->set_BLE_server (esn.c_str ());
-
-
-        // We have found a device, let us now see if it contains the service we
-        // are looking for.
-        if (advertisedDevice.haveServiceUUID () &&
-            advertisedDevice.isAdvertisingService (serviceUUID)) {
-
-            BLEDevice::getScan ()->stop ();
-            myDevice  = new BLEAdvertisedDevice (advertisedDevice);
-            doConnect = true;
-            doScan    = true;
-
-        } // Found our server
-        // if (advertisedDevice.getAddress ().equals (bleAddr)) {
-        //     BLEDevice::getScan ()->stop ();
-        //     myDevice  = new BLEAdvertisedDevice (advertisedDevice);
-        //     doConnect = true;
-        //     doScan    = true;
-        //     Serial.println ("Device found by address ");
-        // }
-
         if (advertisedDevice.getName () == status->get_BLE_server () /*bleServerName*/) {
             BLEDevice::getScan ()->stop ();
             myDevice  = new BLEAdvertisedDevice (advertisedDevice);
@@ -356,14 +319,14 @@ void loop () {
             // Set the characteristic's value to be the array of bytes that
             // is actually a string.
             pRemoteCharacteristic_GF_MT_CHAR1->writeValue ((uint8_t*)ble_msg.msg_int60m,
-                                                           sizeof(ble_msg.msg_int60m), true);
+                                                           sizeof (ble_msg.msg_int60m), true);
             delay (100);
             // Set the characteristic's value to be the array of bytes that
             // is actually a string.
             pRemoteCharacteristic_GF_MT_ACT->writeValue ((uint8_t*)ble_msg.msg_process,
                                                          1, true);
 
-            status->SetIntervalStatus(0);
+            status->SetIntervalStatus (0);
         }
 
 
