@@ -204,34 +204,17 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
     } // onResult
 };    // MyAdvertisedDeviceCallbacks
 
-
-void setup () {
-    Serial.begin (115200);
-
-    aes256_test.get_aes256 ();
-
-    aes256_test.test_AES256 ();
-
-    NetraCubeBLE.task_init ();
-
-
-    Serial.println ("Starting Arduino BLE Client application...");
-    BLEDevice::init ("");
-
-    // Retrieve a Scanner and set the callback we want to use to be informed
-    // when we have detected a new device.  Specify that we want active scanning
-    // and start the scan to run for 5 seconds.
-    BLEScan* pBLEScan = BLEDevice::getScan ();
-    pBLEScan->setAdvertisedDeviceCallbacks (new MyAdvertisedDeviceCallbacks ());
-    pBLEScan->setInterval (1349);
-    pBLEScan->setWindow (449);
-    pBLEScan->setActiveScan (true);
-    pBLEScan->start (60, true);
-} // End of setup.
+void ledTask(void *pvParameters) {
+    for(;;) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(500); // LED on for 500 ms
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(500); // LED off for 500 ms
+    }
+}
 
 
-// This is the Arduino main loop function.
-void loop () {
+void bleTask(void *pvParameters) {
 
     // If the flag "doConnect" is true then we have scanned for and found the
     // desired BLE Server with which we wish to connect.  Now we connect to it.
@@ -371,3 +354,51 @@ void loop () {
     }
     delay (1000); // Delay a second between loops.
 } // End of loop
+
+
+void setup () {
+    Serial.begin (115200);
+
+    aes256_test.get_aes256 ();
+
+    aes256_test.test_AES256 ();
+
+    NetraCubeBLE.task_init ();
+
+
+    Serial.println ("Starting Arduino BLE Client application...");
+    BLEDevice::init ("");
+
+    // Retrieve a Scanner and set the callback we want to use to be informed
+    // when we have detected a new device.  Specify that we want active scanning
+    // and start the scan to run for 5 seconds.
+    BLEScan* pBLEScan = BLEDevice::getScan ();
+    pBLEScan->setAdvertisedDeviceCallbacks (new MyAdvertisedDeviceCallbacks ());
+    pBLEScan->setInterval (1349);
+    pBLEScan->setWindow (449);
+    pBLEScan->setActiveScan (true);
+    pBLEScan->start (60, true);
+
+    xTaskCreatePinnedToCore(
+        bleTask,   /* Function to implement the task */
+        "bleTask", /* Name of the task */
+        10000,     /* Stack size in words */
+        NULL,      /* Task input parameter */
+        1,         /* Priority of the task */
+        NULL,      /* Task handle. */
+        0);        /* Core where the task should run */
+
+    xTaskCreatePinnedToCore(
+        ledTask,   /* Function to implement the task */
+        "ledTask", /* Name of the task */
+        10000,     /* Stack size in words */
+        NULL,      /* Task input parameter */
+        1,         /* Priority of the task */
+        NULL,      /* Task handle. */
+        1);        /* Core where the task should run */
+} // End of setup.
+
+// This is the Arduino main loop function.
+void loop () {
+    // delay (100000); // Delay a second between loops.
+}
