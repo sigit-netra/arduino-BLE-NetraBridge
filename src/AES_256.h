@@ -11,41 +11,29 @@
 #include <ArduinoJson.h>
 #include <Crypto.h>
 #include <string>
+#include "tools/tools.h"
+#include "deviceStatus/deviceStatus.h"
 
 
 #define FORMAT_SPIFFS_IF_FAILED true
-
-constexpr const char* file_name (const char* path) {
-    const char* file = path;
-    while (*path) {
-        if (*path++ == '/') {
-            file = path;
-        }
-    }
-    return file;
-}
-
-#define CUBE_LOG_SERIAL(...)                             \
-    printf ("[%s:%d] ", file_name (__FILE__), __LINE__); \
-    printf (__VA_ARGS__);                                \
-    printf ("\r\n");
 
 class AES_256 {
   private:
     AES256 aes256;
     BlockCipher* cipher = &aes256;
-    // BLE_components server;
-
 
   public:
     uint16_t GF_Common_Crc16 (uint8_t* data, uint16_t length);
-    void test_AES256 ();
+    void get_encryption_payload ();
     void get_aes256 ();
 
     void restart_cmd ();
     void checkAndCreateEncryptionKeysFile ();
 
     void gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData);
+    void decrypt_aes256 (uint8_t* key, uint8_t* encryptedMessage, uint8_t* decryptedMessage);
+    void encrypt_aes256 (uint8_t* key, uint8_t* decryptedMessage, int messageLen, uint8_t* bufferEncryptedMessage);
+
 
     static void restart_cmd_wrapper (void* _this) {
         static_cast<AES_256*> (_this)->restart_cmd ();
