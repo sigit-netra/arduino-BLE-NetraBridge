@@ -38,9 +38,11 @@ std::string AT::processCommand (std::string input) {
     if (auto [whole] = ctre::match<AT_STATUS> (input); whole) {
         printf ("AT_STATUS\r\n");
         char tmp[50] = { 0 };
-        sprintf (tmp, "%d,%d,%d,%.6f,%.6f,%d,%d", status->GetBLEStatus (),
-                 status->GetBLEStatus (), status->GetBLEStatus (), 1.000, 1.000, 0, 0);
-        //  status->GetBLEStatus (), 0.000, 0.000, 0, 0);
+        auto _Status = deviceStatus::GetInstance ();
+
+        sprintf (tmp, "%d,%d,%d,%.6f,%.6f,%d,%d", _Status->get_ble_status (),
+                 _Status->get_ble_status (), _Status->get_ble_status (), 1.000,
+                 1.000, 0, 0);
 
         std::string result;
         result += "++STATUS:";
@@ -72,16 +74,17 @@ std::string AT::processCommand (std::string input) {
         printf ("AT_SOS\r\n");
 
         int valueInt = std::stoi (value.str ());
+        auto _Status = deviceStatus::GetInstance ();
 
         if (valueInt == 0) {
             // _msgbox.outboxCancelSOS ();
-            status->SetSOSStatus (10);
+            _Status->set_sos_status (100);
             printf ("SetSOSStatus CANCEL SOS...\r\n");
 
 
         } else if (valueInt == 1) {
             // _msgbox.outboxSendSOS ();
-            status->SetSOSStatus (5);
+            _Status->set_sos_status (99);
             printf ("SetSOSStatus SOS...\r\n");
         }
 
@@ -112,7 +115,7 @@ std::string AT::processCommand (std::string input) {
         std::string output;
         serializeJson (doc, output);
 
-        aes.writeFileString (SPIFFS, "/encryption_keys.json", output.data ());
+        aes.writeFileString (SPIFFS, "/BLEM_data.json", output.data ());
 
         xTaskCreatePinnedToCore (aes.restart_cmd_wrapper, "restart", 1 * 1024,
                                  this, 4, NULL, 0);
@@ -134,7 +137,7 @@ std::string AT::processCommand (std::string input) {
         int intervalInt = std::stoi (interval.str ());
 
         bool valid = (intervalInt >= 30 && interval <= 1440);
-        status->SetIntervalStatus(1);
+        status->SetIntervalStatus (1);
 
         if (!valid) {
             return "AT_ERROR";
