@@ -4,15 +4,15 @@
 #include "FS.h"
 #include "MessageTypes.h"
 #include "SPIFFS.h"
+#include "deviceStatus/deviceStatus.h"
 #include "global.hpp"
 #include "status.hpp"
 #include "string"
+#include "tools/tools.h"
 #include <AES.h>
 #include <ArduinoJson.h>
 #include <Crypto.h>
 #include <string>
-#include "tools/tools.h"
-#include "deviceStatus/deviceStatus.h"
 
 
 #define FORMAT_SPIFFS_IF_FAILED true
@@ -32,6 +32,11 @@ class AES_256 {
 
     void gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData);
     void decrypt_aes256 (uint8_t* key, uint8_t* encryptedMessage, uint8_t* decryptedMessage);
+    void decrypt_aes256_new (uint8_t* key,
+                             uint8_t* encryptedMessage,
+                             int messageLength,
+                             uint8_t* decryptedMessage);
+
     void encrypt_aes256 (uint8_t* key, uint8_t* decryptedMessage, int messageLen, uint8_t* bufferEncryptedMessage);
 
 

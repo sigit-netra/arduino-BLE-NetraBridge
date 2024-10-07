@@ -89,13 +89,12 @@ void AES_256::get_encryption_payload () {
     _status->set_e_set_60m (buffer, 36);
     memset (buffer, 0x00, sizeof (buffer));
 
+    // Serial.println ("*********************");
+    // decrypt_aes256 (retrieved_key, _status->get_e_set_30m (), buffer);
+    // memset (buffer, 0x00, sizeof (buffer));
 
-    Serial.println ("*********************");
-    decrypt_aes256 (retrieved_key, _status->get_e_set_30m (), buffer);
-    memset (buffer, 0x00, sizeof (buffer));
-
-    decrypt_aes256 (retrieved_key, _status->get_e_set_60m (), buffer);
-    memset (buffer, 0x00, sizeof (buffer));
+    // decrypt_aes256 (retrieved_key, _status->get_e_set_60m (), buffer);
+    // memset (buffer, 0x00, sizeof (buffer));
 }
 
 void AES_256::restart_cmd () {
@@ -162,18 +161,18 @@ void AES_256::gen_aes256 (uint8_t* key, uint8_t* message, uint8_t* buffNewData) 
 void AES_256::decrypt_aes256 (uint8_t* key, uint8_t* encryptedMessage, uint8_t* decryptedMessage) {
     uint8_t blockBuffer[cipher->blockSize ()];
     uint8_t encryptedBuffer[cipher->blockSize ()];
-    
+
     // Buffer untuk menyimpan semua blok dalam satu line
     String encryptedLine = "";
 
     // Hitung panjang pesan terenkripsi
-    int encryptedLen = strlen((char*)encryptedMessage);
-    int blocks = encryptedLen / cipher->blockSize();
+    int encryptedLen = strlen ((char*)encryptedMessage);
+    int blocks       = encryptedLen / cipher->blockSize ();
 
     // Loop over the blocks
     for (int i = 0; i < blocks; i++) {
-        int startingPosition = i * cipher->blockSize();
-        int endingPosition   = startingPosition + cipher->blockSize();
+        int startingPosition = i * cipher->blockSize ();
+        int endingPosition   = startingPosition + cipher->blockSize ();
 
         // Copy encrypted data into temporary buffer
         for (int k = startingPosition; k < endingPosition; k++) {
@@ -181,17 +180,19 @@ void AES_256::decrypt_aes256 (uint8_t* key, uint8_t* encryptedMessage, uint8_t* 
         }
 
         // Gabungkan semua blok menjadi satu line heksadesimal
-        for (int j = 0; j < cipher->blockSize(); j++) {
-            encryptedLine += String(encryptedBuffer[j], HEX);  // Tambahkan byte ke string
+        for (int j = 0; j < cipher->blockSize (); j++) {
+            encryptedLine += String (encryptedBuffer[j], HEX); // Tambahkan byte ke string
             if (encryptedBuffer[j] < 16) {
-                encryptedLine = encryptedLine.substring(0, encryptedLine.length() - 1) + "0" + encryptedLine.substring(encryptedLine.length() - 1); // Pastikan ada leading zero
+                encryptedLine =
+                encryptedLine.substring (0, encryptedLine.length () - 1) +
+                "0" + encryptedLine.substring (encryptedLine.length () - 1); // Pastikan ada leading zero
             }
         }
 
         // Perform decryption on the temp buffer
-        crypto_feed_watchdog();
-        cipher->setKey(key, cipher->keySize());
-        cipher->decryptBlock(blockBuffer, encryptedBuffer);
+        crypto_feed_watchdog ();
+        cipher->setKey (key, cipher->keySize ());
+        cipher->decryptBlock (blockBuffer, encryptedBuffer);
 
         // Copy the decrypted data into the final buffer
         for (int m = startingPosition; m < endingPosition; m++) {
@@ -200,18 +201,48 @@ void AES_256::decrypt_aes256 (uint8_t* key, uint8_t* encryptedMessage, uint8_t* 
     }
 
     // Tampilkan pesan terenkripsi gabungan dalam satu line
-    Serial.print("Encrypted Message Line: ");
-    Serial.println(encryptedLine);
+    // Serial.print ("Encrypted Message Line: ");
+    // Serial.println (encryptedLine);
 
     // Null-terminate the decrypted message if it's a string
     decryptedMessage[encryptedLen] = '\0';
 
     // Tampilkan pesan yang sudah didekripsi
-    Serial.print("Decrypted Message: ");
-    Serial.println((char*)decryptedMessage);
+    // Serial.print ("Decrypted Message: ");
+    // Serial.println ((char*)decryptedMessage);
 }
 
+void AES_256::decrypt_aes256_new(uint8_t* key, uint8_t* encryptedMessage, int messageLength, uint8_t* decryptedMessage) {
+    int blockSize = cipher->blockSize();  // Ambil ukuran blok
+    int blocks = messageLength / blockSize;  // Hitung jumlah blok
+    uint8_t blockBuffer[blockSize];  // Buffer sementara untuk blok didekripsi
+    uint8_t encryptedBuffer[blockSize];  // Buffer sementara untuk blok terenkripsi
 
+    // Set key untuk dekripsi
+    cipher->setKey(key, cipher->keySize());
+
+    // Proses setiap blok
+    for (int i = 0; i < blocks; i++) {
+        // Salin blok terenkripsi ke buffer
+        memcpy(encryptedBuffer, encryptedMessage + (i * blockSize), blockSize);
+
+        // Dekripsi blok
+        cipher->decryptBlock(blockBuffer, encryptedBuffer);
+
+        // Salin blok yang didekripsi ke buffer pesan akhir
+        memcpy(decryptedMessage + (i * blockSize), blockBuffer, blockSize);
+    }
+
+    // Null-terminate the decrypted message if it's a string (hanya jika pesan berupa string)
+    decryptedMessage[messageLength] = '\0';
+
+    // Tampilkan hasil dekripsi
+    Serial.print("Decrypted Message: ");
+    for (int i = 0; i < messageLength; i++) {
+        Serial.printf("%02X", decryptedMessage[i]);
+    }
+    Serial.println();
+}
 
 void AES_256::encrypt_aes256 (uint8_t* key,
                               uint8_t* decryptedMessage,
