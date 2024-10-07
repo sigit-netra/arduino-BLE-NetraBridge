@@ -174,13 +174,16 @@ static void notifyCallbackGF_MO_ACT (BLERemoteCharacteristic* pBLERemoteCharacte
             Serial.printf ("%02X", result[i]);
         }
         Serial.println ("");
+        delay (100);
         uint8_t decryptedData[34]; // Buffer untuk data terdekripsi
         uint8_t retrieved_key[32];
         _status->get_key_AES256 (retrieved_key);
+        delay (100);
+
         AES_256 _aes256;
 
-        _aes256.decrypt_aes256 (retrieved_key, result, decryptedData);
-
+        // _aes256.decrypt_aes256 (retrieved_key, result, decryptedData);
+        _aes256.decrypt_aes256_new (retrieved_key, result, length, decryptedData);
         if (decryptedData[0] == 0x48) {
             // Tampilkan hasil dekripsi
             Serial.println ("Decrypted data:");
@@ -1038,6 +1041,12 @@ void BLE_handler::set_interval_30m () {
     memcpy (part1, encryptedMessage, 20);
     memcpy (part2, encryptedMessage + 20, 20);
 
+    Serial.print ("Encrypted Data 30m: ");
+    for (int i = 0; i < 36; i++) {
+        Serial.printf ("%02X", encryptedMessage[i]); // Cetak dalam format hexadecimal 2 digit
+    }
+    Serial.println (); // Pindah ke baris baru setelah semua byte dicetak
+
     // Write the first 20 bytes to the first characteristic
     pRemoteCharacteristic_GF_MT_CHAR1->writeValue (part1, 20, true);
     delay (100);
@@ -1064,6 +1073,11 @@ void BLE_handler::set_interval_60m () {
     // Split the data into part1 and part2
     memcpy (part1, encryptedMessage, 20);
     memcpy (part2, encryptedMessage + 20, 20);
+    Serial.print ("Encrypted Data 60m: ");
+    for (int i = 0; i < 36; i++) {
+        Serial.printf ("%02X", encryptedMessage[i]); // Cetak dalam format hexadecimal 2 digit
+    }
+    Serial.println (); // Pindah ke baris baru setelah semua byte dicetak
 
     // Write the first 20 bytes to the first characteristic
     pRemoteCharacteristic_GF_MT_CHAR1->writeValue (part1, 20, true);
