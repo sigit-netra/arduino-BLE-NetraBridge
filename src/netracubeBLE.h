@@ -19,6 +19,7 @@ class netracubeBLE {
     void task_init ();
     void task_at_commands ();
     void task_button ();
+    void task_scheduler ();
 
 
     static void task_at_commands_wrapper (void* _this) {
@@ -27,5 +28,9 @@ class netracubeBLE {
 
     static void task_button_wrapper (void* _this) {
         static_cast<netracubeBLE*> (_this)->task_button ();
+    }
+
+    static void task_scheduler_wrapper (void* _this) {
+        static_cast<netracubeBLE*> (_this)->task_scheduler ();
     }
 };

@@ -1,11 +1,14 @@
 #include "netracubeBLE.h"
 
 void netracubeBLE::task_init () {
-    // xTaskCreatePinnedToCore (this->task_at_commands_wrapper, "task_at_commands",
-    //                          4 * 1024, this, 4, NULL, 0);
+    xTaskCreatePinnedToCore (this->task_at_commands_wrapper, "task_at_commands",
+                             4 * 1024, this, 4, NULL, 0);
 
     xTaskCreatePinnedToCore (this->task_button_wrapper, "task_button_wrapper",
                              4 * 1024, this, 4, NULL, 0);
+
+    xTaskCreatePinnedToCore (this->task_scheduler_wrapper,
+                             "task_scheduler_wrapper", 4 * 1024, this, 4, NULL, 0);
 }
 
 void netracubeBLE::task_at_commands () {
@@ -72,5 +75,50 @@ void netracubeBLE::task_button () {
             }
         }
         vTaskDelay (50 / portTICK_PERIOD_MS);
+    }
+}
+
+void netracubeBLE::task_scheduler () {
+    unsigned long previousMillis  = 0;
+    const unsigned long interval  = 2 * 60 * 60 * 1000; // 2 jam
+    const unsigned long delay_sos = 10 * 60 * 1000;     // 10 menit
+    auto _status                  = deviceStatus::GetInstance ();
+
+    while (1) {
+        unsigned long currentMillis = millis ();
+
+        // Jika waktu sudah melebihi interval 2 jam
+        if (currentMillis - previousMillis >= interval) {
+            previousMillis =
+            currentMillis; // Simpan waktu saat ini sebagai referensi berikutnya
+
+            // Jika tombol SOS tidak aktif, kirim SOS
+            if (!_status->get_button_sos_status ()) {
+                printf ("SOS...\n");
+                _status->set_button_sos_status (1);
+                _status->set_sos_status (99);
+                _status->set_ble_ack_status (0);
+
+                // Tunggu selama 5 detik setelah SOS dikirim
+                vTaskDelay (5000 / portTICK_PERIOD_MS);
+            }
+
+            // Tunggu 10 menit sebelum membatalkan SOS
+            vTaskDelay (delay_sos / portTICK_PERIOD_MS);
+
+            // Jika tombol SOS masih aktif, batalkan SOS
+            if (_status->get_button_sos_status ()) {
+                printf ("CANCEL SOS...\n");
+                _status->set_button_sos_status (0);
+                _status->set_sos_status (100);
+                _status->set_ble_ack_status (0);
+
+                // Tunggu 5 detik setelah SOS dibatalkan
+                vTaskDelay (5000 / portTICK_PERIOD_MS);
+            }
+        }
+
+        // Delay kecil untuk menghindari penggunaan CPU tinggi
+        vTaskDelay (1000 / portTICK_PERIOD_MS);
     }
 }

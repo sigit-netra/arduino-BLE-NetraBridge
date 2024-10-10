@@ -794,7 +794,7 @@ void BLE_handler::entrypoint_parser () {
                 previousMillis = currentMillis;
                 Serial.println ("own __ restart");
                 delay (3000);
-                // ESP.restart ();
+                ESP.restart ();
                 // BLEM_LOG_ALL ("_msg.get_msg_json_tracker : %s",
                 //                  _msg.get_msg_json_tracker ().c_str ());
             }
