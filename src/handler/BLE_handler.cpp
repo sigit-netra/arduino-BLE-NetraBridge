@@ -97,10 +97,10 @@ static void notifyCallbackGF_MO_CHAR1 (BLERemoteCharacteristic* pBLERemoteCharac
     memcpy (ble_ack_data, pData, 20);
 
     // _status->set_sos_status (0);
-    if (send_CANCEL_SOS && send_SOS) {
-        send_CANCEL_SOS = false;
-        send_SOS        = false;
-    }
+    // if (send_CANCEL_SOS && send_SOS) {
+    //     send_CANCEL_SOS = false;
+    //     send_SOS        = false;
+    // }
     // _status->set_ble_ack_status (1);
     // LL_esp32.blink_led (500, O_LED_STATUS);
 }
@@ -150,10 +150,7 @@ static void notifyCallbackGF_MO_ACT (BLERemoteCharacteristic* pBLERemoteCharacte
     if (_status->get_sos_status () == 100) {
         _status->set_sos_status (0);
     }
-    if (send_CANCEL_SOS && send_SOS) {
-        send_CANCEL_SOS = false;
-        send_SOS        = false;
-    }
+
     _status->set_ble_ack_status (1);
     // LL_esp32.blink_led (500, O_LED_STATUS);
 
@@ -314,6 +311,12 @@ static void notifyCallbackGF_MO_ACT (BLERemoteCharacteristic* pBLERemoteCharacte
 
             if (value == 0x24 && result == 0x00) {
                 _status->set_act_user_location_msg (100);
+            }
+            BLEM_LOG_ALL ("SOS Status %d || %d ", send_CANCEL_SOS, send_SOS);
+
+            if (send_CANCEL_SOS && send_SOS) {
+                send_CANCEL_SOS = false;
+                send_SOS        = false;
             }
         }
         // _status->set_ble_ack_status (0);
@@ -698,12 +701,13 @@ void BLE_handler::entrypoint () {
                         pRemoteCharacteristic_GF_MT_ACT->writeValue (
                         (uint8_t*)_status->get_process (), 1, true);
                         //-------------------------------------------------
+                        send_SOS = true;
+
                         delay (5000);
                         send_eng_msg ();
                         delay (5000);
                         send_ping_location ();
                         //-------------------------------------------------
-                        send_SOS = true;
                     }
                 }
 
@@ -718,12 +722,13 @@ void BLE_handler::entrypoint () {
                         pRemoteCharacteristic_GF_MT_ACT->writeValue (
                         (uint8_t*)_status->get_process (), 1, true);
                         //-------------------------------------------------
+                        send_CANCEL_SOS = true;
+
                         delay (10000);
                         send_eng_msg ();
                         delay (10000);
                         send_ping_location ();
                         //-------------------------------------------------
-                        send_CANCEL_SOS = true;
                     }
                 }
 
